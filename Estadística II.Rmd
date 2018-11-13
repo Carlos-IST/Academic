@@ -1,0 +1,70 @@
+---
+title: "Estadística II"
+author: "Carlos Santillán"
+date: "13 de noviembre de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Cargamos librerías a usar
+```{r}
+library(dplyr)
+library(pastecs)
+library(randtests)
+```
+
+### Construimos vectores con datos y verificamos magnitud
+
+- vector1 =
+
+- vector2 =
+
+```{r}
+
+```
+
+### Obtenemos estadísticas básicas de los datos
+
+- media1 =
+
+- media2 =
+
+- mediana1 =
+
+- mediana2 =
+
+- stdev1 =
+
+- stdev2 =
+
+
+```{r}
+
+```
+
+### Pruebas previas
+
+
+
+```{r}
+
+```
+
+
+
+### Prueba de Hipótesis
+
+- H_{0}: 
+
+- H_{1}:
+
+- \alpha =
+
+```{r}
+
+
+```
+
