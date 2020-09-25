@@ -1,0 +1,334 @@
+---
+title: "Métodos Numéricos Final"
+author: "Carlos Santillán"
+date: "13 de noviembre de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(MASS)
+library(deSolve)
+library(rSymPy)
+library(polynom)
+```
+
+
+
+## Examen 1
+
+### Pregunta 1
+
+- Runge-Kutta para 
+
+$y^{''} = y^{'} + 2y + cos(x), 0 \leq x \leq \frac{\pi}{2}$
+
+y(1)=-0.3, $y^{'}(\frac{\pi}{2}) = -0.1$
+
+con $h = \frac{\pi}{32}$
+
+b) Resolver de forma analítica y comparar en $y(\frac{\pi}{2})$
+
+```{r}
+
+```
+
+### Pregunta 2
+
+- Método de Newton para el sistema no lineal:
+
+x2+y-37=0
+
+x-y2-5=0
+
+x+y+z-3=0
+
+Realice tantas iteraciones hasta que $||\hat{x_{i}} - \hat{x_{i - 1}}|| < 10^{-8}$
+
+```{r}
+model <- function(x) c(F1 = X[1]^2 + X[2] - 37,
+                       F2 = x[1] - x[2]^2 - 5,
+                       F3 = x[1] + x[2] + x[3] - 3)
+
+ss <- multiroot(f = model, start = c(0, 0, 0), maxiter = 100)
+
+```
+
+
+### Pregunta 3
+
+Considerar el sistema
+
+$$
+\left(\begin{array}{cc} 
+4 & -1 & 1 & 0\\
+-1 & 4 & -1 & 0\\
+1 & -1 & 4 & -1\\
+0 & 0 & -1 & 4
+\end{array}\right)
+\left(\begin{array}{cc} 
+x\\ 
+y\\
+z\\
+w
+\end{array}\right)
+$$ 
+igual al vector 1
+
+a) ¿Es posible aplicar el método de Gauss-Seidel? Justificar usando el radio espectral
+
+b) Si la respuesta es afirmativa, aplique el método hasta $||\hat{x_{i}} - \hat{x_{i - 1}}|| < 10^{-8}$
+
+c) Compararlo con la solución exacta
+
+```{r}
+A = matrix(
+  c(4, -1, 1, 0, -1, 4, -1, 0, 1, -1, 4, -1, 0, 0, -1, 4),    #datos de la matriz
+  nrow = 4,         ## num de renglones
+  ncol = 4,         ## num de columnas
+  byrow = TRUE)     ## llena por renglones
+A
+```
+
+```{r}
+eigen(A)
+```
+
+```{r}
+b <- t(t(c(1, 1, 1, 1)))      # vector b de resultados
+x0 <- t(t(c(0, 0, 0, 0)))     # vector inicial
+iter <- 10                    # iteraciones de Gauss Seidel
+L <- lower.tri(A) * A 
+U <- upper.tri(A) * A
+D <- diag(diag(A))
+n <- 1
+while(n <= iter){
+  print(x0)
+  
+  # Fórmula de Gauss-Seidel
+  x1 <- (ginv((L + D)))%*%((-U%*%x0) + b)
+  x0 <- x1
+  n = n + 1
+}
+```
+
+
+### Pregunta 4
+
+Elaborar tabla de diferencias divididas a partir de 
+
+| x  |0.5|-0.2   |0.7   |0.1   |0.0  |
+|---|---|---|---|---|---|
+| f(x)  | -1.1518  |0.7028   |-1.4845   |-0.14943   |0.13534   |
+
+b) Use la tabla de diferencias dividas en (a) para estimar f(0.15) usando:
+- polinomio de grado 2 que pasa por los 3 primeros términos
+- polinomio de grado 2 que pasa por los 3 últimos términos
+¿Por qué son diferentes los resultados?
+
+c) Utilice polinomios de Lagrange para resolver el b)
+
+```{r}
+divided.differences <- function(x, y, x0) {
+  require(rSymPy)
+  n <- length(x)
+  q <- matrix(data = 0, n, n)
+  q[,1] <- y
+  f <- as.character(round(q[1,1], 5))
+  fi <- ''
+  
+  for (i in 2:n) {
+    for (j in i:n) {
+      q[j,i] <- (q[j,i-1] - q[j-1,i-1]) / (x[j] - x[j-i+1])
+    }
+    fi <- paste(fi, '*(x - ', x[i-1], ')', sep = '', collapse = '')
+    
+    f <- paste(f, ' + ', round(q[i,i], 5), fi, sep = '', collapse = '')
+  }
+  
+  x <- Var('x')
+  sympy(paste('e = ', f, collapse = '', sep = ''))
+  approx <- sympy(paste('e.subs(x, ', as.character(x0), ')', sep = '', collapse = ''))
+  
+  return(list('Aproximación por Interpolación'=as.numeric(approx), 
+              'Función Interpolada'=f, 
+              'Tabla de Diferencias Divididas'=q))
+}
+
+x <- c(0.5, -0.2, 0.7, 0.1, 0.0)
+fx <- c(-1.1518, 0.7028, -1.4845, -0.14943, 0.13534)
+```
+
+```{r}
+divided.differences(x, fx, 0.15)
+```
+
+```{r}
+lagrange.poly(x, fx)
+```
+
+
+### Pregunta 5
+
+Obtenga las aproximaciones, con exactitud de 10-5 a todas las raíces reales del polinomio
+
+f(x)=x5+11x4-21x3-10x2-21x-5
+
+Utilice el método que considere conveniente
+
+```{r}
+
+p <- polynomial(-5, -21, -10, -21, 11, 1)
+
+pz <- solve(p)
+```
+
+### Pregunta 6
+
+Demuestre que el método de bisección tiene orden de convergencia 1
+
+b) Considere el polinomio de Lagrange de orden 2. Demuestre que a2=f[x0,x1,x2]
+
+
+
+## Examen 2
+
+### Pregunta 1
+
+a) Resolver el sistema por **Método de Taylor**
+
+$(x + 1) \frac{dy}{dx} + y = ln(x)cony(1) = 10$
+
+Encontrar y(3) con h=0.2
+
+b) Resolver de forma analítica la ecuación
+
+```{r}
+
+```
+
+### Pregunta 2
+
+**Runge-Kutta de 4o orden**
+
+$(e^{-y}+1)sin(x)dx=(1+cos(x))$
+
+y(0)=0
+
+y(2)=?
+
+con h=0.2
+
+b) Resolver de forma analítica
+
+```{r}
+```
+
+### Pregunta 3
+
+**Runge-Kutta de 4o orden** 
+
+$y''+4y'+5y=35e-4x,y(0)=-3,y'(0)=1$
+
+con h=0.01
+
+b) Resolver de forma analítica
+
+```{r}
+```
+
+### Pregunta 4
+
+**Método de Newton**
+
+$\frac{1}{2} + \frac{1}{4}x^{2} - x sin(x) - \frac{1}{2}cos(2x) , x_{0} = \frac{\pi}{2}$
+
+Con exactitud de 10-8
+
+Explíque por qué converge linealmente el método de Newton
+
+b) Resolver con los puntos iniciales $x_{0} = 5 \pi $ y $x_{0} = 10 \pi$
+
+c) Utilice Newton Modificado
+
+```{r}
+
+```
+
+### Pregunta 5
+
+Sea $z(x) = \prod_{j = 0}^{n} (x - x_{j})$ Demuestre que el polinomio de Lagrange puede escribirse como
+
+$p_{n}(x) = z(x) \sum_{i = 0}^{n} \frac{f(x_{i})}{(x - x_{j}) z^{'}(x_{i})}$
+
+## Examen 3
+
+### Pregunta 1
+
+a) Resolver por **Método de Taylor**
+
+$y^{'} = \frac{2}{t} y + t^{2} e^{t}cony(1) = 0$
+
+Encontrat y(2) con h=0.2
+
+b) Resolver de forma analítica
+
+```{r}
+```
+
+
+### Pregunta 2
+
+**Misma que la pregunta 2 del Examen 2**
+
+### Pregunta 3
+
+**Runge-Kutta 4o orden**
+
+y''+y=tan(x),y(0)=-3,y'(0)=1
+
+con h=0.01
+
+b) Resolver de forma analítica
+
+```{r}
+```
+
+### Pregunta 4
+
+a) **Método de Newton** y **Newton modificado** para encontrar
+
+e6x+1441e2x-2079e4x-0.3330=1
+
+con exactitud de 10-8
+
+b) Determine una función g(x) y un intervalo [a,b] donde la iteración de **punto fijo** convergerá en una solución positiva de la ecuación
+
+3x2-ex=0
+
+```{r}
+```
+
+### Pregunta 5
+
+Demuestre que si A es simétrica, entonces $||A||_{2} = \rho (A)$
+b) Si $a_{ii} \neq 0 \forall i \in \{1, 2, ..., n\}entonces\rho (T_{w}) \geq |w - 1|yporlotantoseconcluyeque0<w$ > 2
+
+
+
+
+
+### Para resolver Runge-Kutta con ecs. de 2o orden
+
+1. Despejar $y^{''}$
+
+2. Sea $w_{1} = y$ y $w_{2} = y^{'}$
+
+3. Despejar a $x$
+
+
+
+
